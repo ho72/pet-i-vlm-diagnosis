@@ -116,7 +116,7 @@ PET-I/
 
 ### 2. 💬 인터랙티브 챗봇 (Interactive Chatbot)
 * 단순 진단에 그치지 않고, "집에서 어떻게 관리해?", "수술해야 해?"와 같은 질문에 답변합니다.
-* **RAG (LangChain)**와 **Web Search (DuckDuckGo)**를 연동하여, 모델이 학습하지 않은 최신 수의학 정보까지 반영한 근거 있는 답변을 생성합니다.
+* **질환별 로컬 문서 기반 RAG**와 **Web Search (DuckDuckGo·Wikipedia)**를 연동하여, 모델이 학습하지 않은 최신 수의학 정보까지 반영한 근거 있는 답변을 생성합니다.
 
 ### 3. ⚡ Serverless Serving
 * RunPod Serverless를 도입하여 GPU 인스턴스를 상시 유지하지 않고 **요청 시에만 과금**되는 효율적인 아키텍처를 구현했습니다.
@@ -146,7 +146,7 @@ PET-I/
 * **Role:**
     * **AI Modeling:** Qwen3-VL Fine-tuning, LoRA Adapter Optimization.
     * **Data Engineering:** YOLOv8 Pre-processing, Data Augmentation using LLM.
-    * **Backend Logic:** RAG (LangChain) & DuckDuckGo Search Integration.
+    * **Backend Logic:** Local-document RAG & DuckDuckGo/Wikipedia Search Integration.
 
 * **Contact:** [이메일 주소 입력]
 * **Portfolio:** [링크드인 주소 입력]
@@ -154,3 +154,14 @@ PET-I/
 ---
 
 *※ 본 프로젝트의 상세한 내용은 [최종 보고서](docs/PETI_final_report.pdf)에서 확인하실 수 있습니다.*
+
+---
+
+## 🔗 PET-I 개인 저장소
+
+| 저장소 | 역할 |
+| --- | --- |
+| [PET-I-VLM-Diagnosis](https://github.com/ho72/PET-I-VLM-Diagnosis) | 전체 프로젝트 소개와 VLM 학습·평가·서비스 코드 |
+| [PET-I-Explanation-Data](https://github.com/ho72/PET-I-Explanation-Data) | 진단명·증상과 검색 근거를 바탕으로 설명형 학습 데이터를 생성하는 별도 모듈 |
+
+설명형 데이터 생성 모듈은 이미 주어진 진단명·증상을 입력으로 사용하며 이미지를 직접 판별하지 않습니다. 로컬 문서·DuckDuckGo·Wikipedia를 사용하는 현재 구현을 기준으로 소개합니다.
