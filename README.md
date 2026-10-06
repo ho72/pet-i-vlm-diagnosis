@@ -161,7 +161,7 @@ PET-I/
 
 | 저장소 | 역할 |
 | --- | --- |
-| [PET-I-VLM-Diagnosis](https://github.com/ho72/PET-I-VLM-Diagnosis) | 전체 프로젝트 소개와 VLM 학습·평가·서비스 코드 |
-| [PET-I-Explanation-Data](https://github.com/ho72/PET-I-Explanation-Data) | 진단명·증상과 검색 근거를 바탕으로 설명형 학습 데이터를 생성하는 별도 모듈 |
+| [PET-I-VLM-Diagnosis](https://github.com/ho72/pet-i-vlm-diagnosis) | 전체 프로젝트 소개와 VLM 학습·평가·서비스 코드 |
+| [PET-I-Explanation-Data](https://github.com/ho72/pet-i-explanation-data) | 진단명·증상과 검색 근거를 바탕으로 설명형 학습 데이터를 생성하는 별도 모듈 |
 
 설명형 데이터 생성 모듈은 이미 주어진 진단명·증상을 입력으로 사용하며 이미지를 직접 판별하지 않습니다. 로컬 문서·DuckDuckGo·Wikipedia를 사용하는 현재 구현을 기준으로 소개합니다.
