@@ -1,167 +1,105 @@
-# 🐶 PET-I : Vision-Language Model 기반 반려견 안구 질환 조기 진단 솔루션
+# PET-I
 
-<br>
-<div align="center">
-  <img src="mobile/assets/logo_img.png" width="250" alt="PET-I Logo">
-</div>
-<br>
+**반려견 안구 이미지의 질환 분류와 시각적 증상 설명을 연결한 VLM 기반 졸업프로젝트**
 
-<div align="center">
-  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white">
-  <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white">
-  <img src="https://img.shields.io/badge/Qwen_VL-blue?style=for-the-badge">
-  <img src="https://img.shields.io/badge/RunPod-Serverless-purple?style=for-the-badge">
-  <img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white">
-  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white">
-</div>
+<p align="center"><img src="mobile/assets/logo_img.png" width="180" alt="PET-I 로고"></p>
 
-<br>
+질환명만 표시하는 결과에서 한 걸음 더 나아가, 사진에서 관찰되는 증상과 판단 근거를 보호자가 읽을 수 있는 보고서로 제공합니다. YOLOv8 전처리와 Qwen3-VL-8B LoRA 학습을 중심으로 JSON·Markdown 출력, 검색 근거를 활용한 설명, 후속 질의응답을 하나의 서비스 흐름으로 연결했습니다.
 
-> **"우리 강아지 눈이 빨간데, 병원에 가야 할까요?"**
->
-> PET-I는 단순 분류를 넘어, 질환의 원인과 대처 방법까지 **설명해주는(Explainable)** VLM 기반 AI 진단 서비스입니다.
+**이호철 담당:** 설명형 데이터 생성·전체 전처리, VLM 학습·검증, YOLO 학습·크롭, RAG/Web Search 파이프라인 구현.
 
----
+| 프로젝트 | 내용 |
+| --- | --- |
+| 기간·팀 | 2025.03–2025.12 · 건국대학교 컴퓨터공학부 4인 졸업프로젝트 |
+| 대표 결과 | 7개 분류 정확도 **0.7400**, Macro F1 **0.7404** · 평가 이미지 700장 |
+| 개선 비교 | 동일 평가 이미지에서 중간 Macro F1 **0.6935 → 0.7404** |
+| 학습 환경 | Qwen3-VL-8B · Unsloth/4-bit/LoRA · A100 80GB 1대 |
+| 팀 결과 | 공모전 제출용 웹서비스 배포 · 2025학년도 생성형 AI 활용 사례 공모전 **우수상**(건국대학교, 2026.01.27) |
 
-## 📖 Project Overview
+[평가 결과와 조건](docs/EVALUATION.md) · [문제 해결 과정](docs/DEVELOPMENT.md) · [코드·실행 안내](docs/SETUP.md) · [최종 보고서](docs/PETI_최종보고서.docx)
 
-반려동물 인구 1,500만 시대, 안구 질환은 조기 발견이 어렵고 치료비 부담이 큽니다. 기존의 CNN 기반 진단 모델은 단순히 병명(Label)만 알려줄 뿐, "왜" 그런 진단이 나왔는지 설명하지 못했습니다.
+## 해결하려던 문제
 
-**PET-I**는 최신 **Vision-Language Model (Qwen3-VL)**을 활용하여:
-1.  반려견의 안구 이미지를 분석해 질환을 진단하고,
-2.  판단 근거(시각적 증상)를 자연어로 설명하며,
-3.  **RAG & Web Search**를 통해 보호자에게 전문적인 관리 가이드를 제공합니다.
+보호자가 안구 사진에서 이상을 발견해도 질환명만으로는 어떤 특징을 확인해야 하는지, 추가로 무엇을 물어봐야 하는지 이해하기 어렵습니다. PET-I는 이미지의 질환 분류와 자연어 설명 생성을 함께 다루고, 질환별 문서와 검색 결과를 후속 설명에 연결하는 것을 목표로 했습니다.
 
-* **진행 기간:** 2025. 03 ~ 2025. 12
-* **참여 인원:** 4명 (AI/Backend 2, Frontend 1, Data/RAG 1)
-* **주요 역할:** Data Pipeline 구축, VLM Fine-tuning, RAG/Web Search 구현, YOLO Pre-processing
+## 사용 흐름과 구조
 
----
+1. Flutter 화면에서 반려견 안구 사진을 업로드합니다.
+2. FastAPI 중계 계층과 RunPod Serverless를 통해 분석을 요청합니다.
+3. YOLOv8으로 안구 영역을 찾고, 주변 털·피부를 포함한 패딩 크롭 이미지를 준비합니다.
+4. Qwen3-VL-8B + LoRA가 질환명·증상을 JSON 또는 Markdown 형식으로 생성합니다.
+5. 보고서와 질환별 로컬 문서·웹 검색 근거를 연결하여 설명과 후속 질문에 응답합니다.
 
-## 🛠 System Architecture
+![PET-I 이미지 전처리·보고서·챗봇 구조](docs/Architecture.png)
 
-이 프로젝트는 **Cloud Serverless (RunPod)** 환경에서 대규모 VLM을 효율적으로 서빙하는 End-to-End 파이프라인으로 구성되어 있습니다.
+위 그림은 프로젝트의 보고서·챗봇 흐름입니다. 현재 공개 소스의 검색 컨텍스트는 **질환별 로컬 문서·DuckDuckGo·Wikipedia와 키워드·출처 점수 기반 선별**로 구성됩니다.
 
-![Architecture](docs/Architecture.png)
+공모전 제출을 위한 서비스 배포는 팀 결과입니다. 현재 운영 중인 공개 데모 주소나 상시 운영 상태는 확인하지 않았습니다.
 
-1.  **User (Flutter App):** 사진 업로드 및 챗봇 상담.
-2.  **Gateway (FastAPI):** 요청 중계 및 데이터 전처리 관리.
-3.  **AI Core (RunPod Serverless):**
-    * **Pre-processing:** YOLOv8을 이용한 안구 영역 검출 (ROI Padding Crop).
-    * **Inference:** Qwen3-VL-8B + LoRA (Low-Rank Adaptation).
-    * **Retrieval:** RAG & Web Search를 통한 외부 지식 연동.
+## 본인 기여와 협업
 
----
+| 담당 영역 | 수행 내용 | 코드·근거 |
+| --- | --- | --- |
+| 데이터 | AI Hub 반려견 이미지 5,600장 선별·전처리, LLM 설명형 데이터 생성, 학습 입력 구성 | [전처리·실험](ai/notebooks/), [별도 설명형 데이터 레포](https://github.com/ho72/pet-i-explanation-data) |
+| VLM | Qwen3-VL-8B LoRA 학습·검증, 응답 영역 학습과 종료 토큰 처리, 실험 결과 비교 | [학습](ai/main_model_train/train.py), [평가](ai/evaluation/validate.py) |
+| ROI | YOLO 학습과 안구 크롭 모듈 구현, 주변 문맥을 포함하는 입력으로 변경 | [YOLO 실험](ai/yolo_train/), [최종 보고서 §5.3](docs/PETI_최종보고서.docx) |
+| 검색 | 질환별 로컬 문서·웹 검색 컨텍스트를 모으고 선별하는 RAG/Web Search 파이프라인 구현 | [검색 모듈](backend/src/rag_chatbot.py), [분석 연동](backend/src/analysis.py) |
+| 초기 구조 지원 | 웹·서버리스·챗봇의 초기 흐름과 연동 기반을 제공하고 담당 팀원에게 전달 | 최종 보고서 §8.1 및 프로젝트 협업 기록 |
 
-## 🧠 AI Methodology & Performance
+웹/RunPod의 최종 구축, 증상 추출·챗봇 데이터 생성, 베이스라인 모델 평가, 챗봇 최종 통합은 팀원의 담당 범위도 포함합니다. 최종 데이터 4종과 서비스 통합 결과는 팀 성과로 구분합니다.
 
-### 1. Model: Qwen3-VL-8B + LoRA
-* **Base Model:** Alibaba Qwen3-VL-8B (High-resolution image understanding).
-* **Fine-tuning Strategy:** `Unsloth` 라이브러리를 활용한 4-bit Quantization 및 LoRA 적용으로 단일 A100 GPU(80GB) 환경에서 학습 최적화.
-* **Data Augmentation:** Llama API 및 GPT API를 활용하여 AI-Hub 데이터셋(5,600장)에 대한 상세 증상 묘사 텍스트를 생성(Synthetic Data)하여 학습 데이터로 구축.
+## 실험에서 바꾼 것
 
-### 2. ROI Optimization (Padding Crop)
-단순 안구 크롭 시 주변 문맥(눈물 자국, 피부 상태)이 소실되는 문제를 해결하기 위해, **YOLOv8** 탐지 후 주변부를 포함하는 **Padding Crop** 전략을 도입했습니다.
-* 👉 **유루증(Epiphora) 진단 F1-Score: 0.35 → 0.48 향상**.
+**응답이 끝나지 않는 반복 생성:** 초기 학습 출력에서 마지막 문장을 토큰 한도까지 반복하는 문제가 나타났습니다. 종료 토큰이 전처리에 포함되지 않은 점을 분석하고, 학습 과정에서 필요한 토큰이 자동 적용되도록 구성했습니다. 다음 실험에서 반복 문제 해소와 완결된 출력이 확인됐습니다.
 
-### 3. Performance Result
-| Model | Accuracy | Note |
-| :--- | :--- | :--- |
-| **PET-I (Ours)** | **0.92** | *Periocular Issues Group (유사 병변 그룹 통합 기준)* |
-| ResNet50 (Baseline) | 0.94 | 단순 이미지 분류 모델 |
-| CLIP (Baseline) | 0.90 | 멀티모달 모델 |
+**크롭으로 사라지는 주변 문맥:** 원본과 크롭을 함께 사용하는 입력에서 성능 저하가 관찰됐습니다. 눈 밑 털의 착색과 주변 피부 같은 정보를 보존하기 위해 단일 패딩 크롭으로 바꾸고, 진단·설명·챗봇 학습 데이터를 함께 통합했습니다.
 
-* 전체 7개 클래스 세부 진단 정확도: **0.74** (F1-Score 0.7404).
-* 기존 CNN 모델과 대등한 분류 성능을 보이면서도, **"설명 가능한 진단 리포트"**를 생성한다는 점에서 차별화된 경쟁력을 입증했습니다.
+| 7개 분류 실험 | 정확도 | Macro F1 |
+| --- | --- | --- |
+| 템플릿 다양화 중간 실험 | 0.7086 | 0.6935 |
+| 데이터 통합·단일 패딩 크롭 최종 실험 | **0.7400** | **0.7404** |
 
----
+입력 방식과 학습 데이터 구성이 동시에 바뀐 결과이며, 개별 조치의 효과를 분리한 실험은 아닙니다. [실험 흐름과 문제 해결](docs/DEVELOPMENT.md)에 조건을 정리했습니다.
 
-## 📂 Repository Structure
+## 평가 결과를 읽는 방법
+
+최종 7개 분류는 무증상과 6개 질환을 구분하며, **각 100장·총 700장**으로 평가했습니다.
+
+| 모델 | 7개 분류 정확도 | 유사 병변 그룹 통합 정확도 |
+| --- | --- | --- |
+| ResNet50 | 0.79 | 0.944 |
+| CLIP | 0.73 | 0.897 |
+| PET-I | **0.7400** | **0.920** |
+
+그룹 통합 평가는 **안검내반증·안검염·유루증을 한 그룹으로 묶어 재평가**한 결과로, 7개 분류와 다른 평가 기준입니다. 분류 정확도에서는 ResNet50이 높았으며, PET-I는 분류와 보고서·대화 출력을 함께 다루는 방향을 탐색했습니다. [클래스별 결과·비교 조건](docs/EVALUATION.md)을 참고하세요.
+
+## 데이터와 공개 코드
+
+원본은 AI Hub의 [반려동물 안구 질환 데이터](https://www.aihub.or.kr/aihubdata/data/view.do?currMenu=115&dataSetSn=562&topMenu=100)입니다. JPG 이미지·JSON 라벨에서 반려견의 7개 분류 항목으로 5,600장을 준비했습니다. 설명형 데이터는 원본 라벨에 포함된 완성 문장이 아니라 LLM과 검색 컨텍스트를 이용해 생성한 별도 학습 자료입니다.
+
+최종 보고서 §5.3의 팀 데이터 구성은 진단 JSON 5,600개, 진단 Markdown 5,600개, 설명형 2,040개(기본 1,020개 × 2), 챗봇형 16,800개입니다. **이미지 수·학습 레코드 수·평가 이미지 수는 서로 다른 단위**이며, 전체 매핑·필터 통과율·분할 검증은 후속 과제입니다.
 
 ```text
-PET-I/
-├── ai/                      # AI Model Training & Evaluation
-│   ├── main_model_train/    # Qwen-VL Fine-tuning Code (Unsloth, LoRA)
-│   │   └── train.py         # Training Script
-│   ├── notebooks/           # Data Preprocessing & Experiments
-│   │   ├── image_preprocessing.ipynb
-│   │   └── auto_ctx.py
-│   ├── evaluation/          # Inference & Validation Code (vs ResNet, CLIP)
-│   │   ├── validate.py
-│   │   ├── clip_model.py
-│   │   └── resnet50.py
-│   ├── yolo_train/          # YOLO Training & Inference
-│   │   └── yolo_train.ipynb
-│   └── data/                # Sample Dataset
-├── backend/                 # Serverless Backend
-│   ├── src/                 # Handler, RAG Module, Web Search Logic
-│   │   ├── handler.py
-│   │   ├── analysis.py
-│   │   └── rag_chatbot.py
-│   ├── Dockerfile           # RunPod Environment Setup
-│   └── requirements.txt
-├── mobile/                  # Frontend Application (Flutter)
-└── docs/                    # Documentation
-    ├── PETI_final_report.pdf # Project Final Report
-    └── Architecture.png     # System Diagram
+ai/                    VLM 학습·평가, 전처리·YOLO 실험
+backend/src/           RunPod handler, 분석·검색·챗봇 모듈
+mobile/lib/            Flutter 화면
+mobile/app_backend/    FastAPI 중계 앱
+docs/                  최종 보고서·구조 이미지·평가·개발·실행 문서
 ```
 
----
+이 레포는 프로젝트의 통합 코드 스냅샷입니다. 설명형 데이터 생성 모듈의 **최근 CLI·오류 처리 개선과 검증은 [pet-i-explanation-data](https://github.com/ho72/pet-i-explanation-data)**를 기준으로 확인하세요. `ai/notebooks/auto_ctx.py`는 기존 스냅샷이며 두 파일이 자동 동기화되는 구조는 아닙니다.
 
-## 🚀 Key Features
+## 실행과 검증 범위
 
-### 1. 📝 AI 진단 리포트 (Structured Diagnosis)
-* 사용자가 업로드한 이미지를 분석하여 **진단명, 주요 증상, 관리 방법**이 포함된 구조화된 리포트를 제공합니다.
-* **JSON 모드**와 **Markdown 모드**를 지원하여 시스템 연동성을 확보했습니다.
+학습·평가에는 별도로 준비한 이미지·학습 JSONL·LoRA·YOLO 가중치와 GPU 환경이 필요합니다. 각 구성요소의 진입점·명령·현재 경로 제약은 [실행 안내](docs/SETUP.md)를 따릅니다.
 
-### 2. 💬 인터랙티브 챗봇 (Interactive Chatbot)
-* 단순 진단에 그치지 않고, "집에서 어떻게 관리해?", "수술해야 해?"와 같은 질문에 답변합니다.
-* **질환별 로컬 문서 기반 RAG**와 **Web Search (DuckDuckGo·Wikipedia)**를 연동하여, 모델이 학습하지 않은 최신 수의학 정보까지 반영한 근거 있는 답변을 생성합니다.
+2026.10.07 정리에서는 최종 보고서의 표·역할·실험 조건과 공개 파일 경로를 대조하고 문서 링크를 확인했습니다. VLM 재학습, GPU 추론, RunPod 배포, Flutter 서비스 연동을 이번에 재실행하지 않았습니다. 과거 실험 성과와 이번 문서 검증을 구분합니다.
 
-### 3. ⚡ Serverless Serving
-* RunPod Serverless를 도입하여 GPU 인스턴스를 상시 유지하지 않고 **요청 시에만 과금**되는 효율적인 아키텍처를 구현했습니다.
+## 한계와 다음 과제
 
----
+- 안검내반증·안검염·유루증의 시각적 유사성으로 세부 분류 혼동이 남았습니다. 유루증 최종 F1은 약 0.48입니다.
+- 자동 생성한 증상·설명 데이터의 품질과 촬영 환경 차이가 결과에 영향을 줄 수 있습니다.
+- GPU 비용 제약으로 광범위한 설정 탐색·반복 실험·통계 검증은 제한됐습니다.
+- 생성된 설명의 사실성·유용성, 수의사의 검토와 외부 임상 검증은 후속 과제입니다. 모델 내부 판단을 검증하는 XAI 기법과도 구분하며, 연구·교육용 결과로 소개합니다.
 
-## 🔧 Trouble Shooting
-
-> 개발 과정에서 겪은 주요 이슈와 해결 과정을 기록했습니다.
-
-### Issue 1. [여기에 이슈 제목 입력]
-* **Problem:** [문제 상황 기술]
-* **Cause:** [원인 분석]
-* **Solution:** [해결 방법 및 코드 수정 내용]
-
-### Issue 2. [두 번째 이슈 제목]
-* **Problem:** ...
-* **Solution:** ...
-
----
-
-## 👨‍💻 Author
-
-**이호철 (Ho-Chul Lee)**
-
-* Department of Computer Science & Engineering, Konkuk Univ.
-* **Role:**
-    * **AI Modeling:** Qwen3-VL Fine-tuning, LoRA Adapter Optimization.
-    * **Data Engineering:** YOLOv8 Pre-processing, Data Augmentation using LLM.
-    * **Backend Logic:** Local-document RAG & DuckDuckGo/Wikipedia Search Integration.
-
-* **Contact:** [이메일 주소 입력]
-* **Portfolio:** [링크드인 주소 입력]
-
----
-
-*※ 본 프로젝트의 상세한 내용은 [최종 보고서](docs/PETI_final_report.pdf)에서 확인하실 수 있습니다.*
-
----
-
-## 🔗 PET-I 개인 저장소
-
-| 저장소 | 역할 |
-| --- | --- |
-| [PET-I-VLM-Diagnosis](https://github.com/ho72/pet-i-vlm-diagnosis) | 전체 프로젝트 소개와 VLM 학습·평가·서비스 코드 |
-| [PET-I-Explanation-Data](https://github.com/ho72/pet-i-explanation-data) | 진단명·증상과 검색 근거를 바탕으로 설명형 학습 데이터를 생성하는 별도 모듈 |
-
-설명형 데이터 생성 모듈은 이미 주어진 진단명·증상을 입력으로 사용하며 이미지를 직접 판별하지 않습니다. 로컬 문서·DuckDuckGo·Wikipedia를 사용하는 현재 구현을 기준으로 소개합니다.
+**작성자:** 이호철 · 건국대학교 컴퓨터공학부

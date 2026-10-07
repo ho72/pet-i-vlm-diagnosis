@@ -53,3 +53,6 @@ app_backend/*.pyc
 
 # 보안
 app_backend/.env
+
+# Word temporary lock files
+~$*.docx
