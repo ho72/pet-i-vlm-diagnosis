@@ -87,7 +87,7 @@ mobile/app_backend/    FastAPI 중계 앱
 docs/                  최종 보고서·구조 이미지·평가·개발·실행 문서
 ```
 
-이 레포는 프로젝트의 통합 코드 스냅샷입니다. 설명형 데이터 생성 모듈의 **최근 CLI·오류 처리 개선과 검증은 [pet-i-explanation-data](https://github.com/ho72/pet-i-explanation-data)**를 기준으로 확인하세요. `ai/notebooks/auto_ctx.py`는 기존 스냅샷이며 두 파일이 자동 동기화되는 구조는 아닙니다.
+이 레포는 프로젝트의 통합 코드 스냅샷입니다. 설명형 데이터 생성 모듈의 최근 CLI·오류 처리 개선과 검증은 [pet-i-explanation-data](https://github.com/ho72/pet-i-explanation-data)를 기준으로 확인하세요. `ai/notebooks/auto_ctx.py`는 기존 스냅샷이며 두 파일이 자동 동기화되는 구조는 아닙니다.
 
 ## 실행과 검증 범위
 
